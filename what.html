@@ -96,7 +96,7 @@
 					};
 					wireframe.onBeforeRender = cube.onBeforeRender;
 
-					cube.rate = 0.00025;
+					cube.rate = (Math.random() >= 0.5) ? -0.00025 : 0.00025;
 					cubes.push(cube);
 					scene.add(cube);
 					wireframe.rate = cube.rate;
