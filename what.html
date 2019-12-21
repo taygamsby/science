@@ -1,0 +1,126 @@
+<html>
+	<head>
+		<title>three.js test</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script>
+			const sync = false; // all cubes have the same rotation
+			const clr = true; // all cubes have unique colours
+			const bright = true; // all cubes are bright colours
+			const toon = false; // "toon mode"
+			const weirdcubes = false; // not perfect squares
+			var d = new Date();
+			var time = d.getTime();
+
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color(0xf0f0f0);
+			scene.fog = new THREE.Fog(0x101010, 70, 130*4);
+			var camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 0.1, 150*2);
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+
+			var geometry = new THREE.BoxGeometry(1,1,1);
+			var linegeometry = new THREE.EdgesGeometry(geometry); // or WireframeGeometry( geometry )
+			var linematerial = new THREE.LineBasicMaterial( { color: 0x111111 } );
+
+			var cubes = [];
+			//var material = new THREE.MeshBasicMaterial( { color: Math.floor((bright*0x808080) | (Math.random() * 0xFFFFFF)) } );
+			var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF } );
+			//(0.2126*R) + (0.7152*G) + (0.0722*B)
+			for (let y=0; y!=100; y++) {
+				for (let x=0; x!=100; x++) {
+					if (weirdcubes === true) {
+						geometry = new THREE.BoxGeometry(Math.random()*1.75+0.75, Math.random()*1.75+0.75, Math.random()*1.75+0.75);
+						linegeometry = new THREE.EdgesGeometry(geometry);
+					}
+					if (bright === true) {
+						let lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+						while (lum < 0.5) { // if the luminosity is less than 0.5, keep slowly going up until good...
+							material.color.r = Math.min(material.color.r + 0.01, 1.0);
+							material.color.g = Math.min(material.color.g + 0.01, 1.0);
+							material.color.b = Math.min(material.color.b + 0.01, 1.0);
+							lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+						}
+					}
+					var cube = new THREE.Mesh(geometry, material);
+					cube.color = 0xFFFFFF;
+					if (weirdcubes === true) {
+						cube.position.x = x*2.5;
+						cube.position.y = y*2.5;
+					} else {
+						cube.position.x = x*1.75;
+						cube.position.y = y*1.75;
+					}
+					if (sync !== true) {
+						cube.rotation.x = Math.random();
+						cube.rotation.y = Math.random();
+						cube.rotation.z = Math.random();
+					}
+					cube.rotationstartx = cube.rotation.x;
+					cube.rotationstarty = cube.rotation.y;
+
+					if (clr === true) {
+						material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF } );
+					}
+					var wireframe = new THREE.LineSegments(linegeometry, linematerial);
+					wireframe.position.x = cube.position.x;
+					wireframe.position.y = cube.position.y;
+					if (toon === true) {
+						wireframe.rotation.x = cube.rotation.x - Math.random()/9;
+						wireframe.rotation.y = cube.rotation.y - Math.random()/9;
+						wireframe.rotation.z = cube.rotation.z - Math.random()/9;
+						wireframe.scale.x *= 1.01;
+						wireframe.scale.y *= 1.01;
+						wireframe.scale.z *= 1.01;
+					} else {
+						wireframe.rotation.x = cube.rotation.x;
+						wireframe.rotation.y = cube.rotation.y;
+						wireframe.rotation.z = cube.rotation.z;
+					}
+					wireframe.rotationstartx = cube.rotationstartx;
+					wireframe.rotationstarty = cube.rotationstarty;
+					
+					cube.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
+						//console.log(this.rate);
+						this.rotation.x = this.rotationstartx + this.rate*timepassed;
+						this.rotation.y = this.rotationstarty + this.rate*timepassed;
+					};
+					wireframe.onBeforeRender = cube.onBeforeRender;
+
+					cube.rate = 0.00025;
+					cubes.push(cube);
+					scene.add(cube);
+					wireframe.rate = cube.rate;
+					cubes.push(wireframe);
+					scene.add(wireframe);
+				}
+			}
+
+			camera.position.x = (weirdcubes === true) ? 50*2.5-1 : 50*2-1;
+			camera.position.y = (weirdcubes === true) ? 50*2.5-1 : 50*2-1;
+			camera.position.z = (weirdcubes === true) ? 10*2.5 : 10; //zoom
+
+			let timepassed = 0.0;
+			var animate = function () {
+				requestAnimationFrame(animate);
+				var now = new Date().getTime();
+				timepassed = Math.abs(time - now) * 1.0;
+				cubes.forEach(obj => {
+					obj.position.z = 0 - timepassed*0.0015;
+				});
+				renderer.render(scene, camera);
+			};
+
+			animate();
+		</script>
+	</body>
+</html>
