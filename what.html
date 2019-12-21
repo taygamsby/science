@@ -91,15 +91,19 @@
 					
 					cube.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
 						//console.log(this.rate);
-						this.rotation.x = this.rotationstartx + this.rate*timepassed;
-						this.rotation.y = this.rotationstarty + this.rate*timepassed;
+						this.rotation.x = this.rotationstartx + this.ratex*timepassed;
+						this.rotation.y = this.rotationstarty + this.ratey*timepassed;
 					};
 					wireframe.onBeforeRender = cube.onBeforeRender;
 
-					cube.rate = (Math.random() >= 0.5) ? -0.00025 : 0.00025;
+					cube.ratex = (Math.random() * 0.00150) - 0.00075;
+					cube.ratey = (Math.random() * 0.00150) - 0.00075;
+					cube.ratez = (Math.random() * 0.0015) + 0.0015;
 					cubes.push(cube);
 					scene.add(cube);
-					wireframe.rate = cube.rate;
+					wireframe.ratex = cube.ratex;
+					wireframe.ratey = cube.ratey;
+					wireframe.ratez = cube.ratez;
 					cubes.push(wireframe);
 					scene.add(wireframe);
 				}
@@ -115,7 +119,7 @@
 				var now = new Date().getTime();
 				timepassed = Math.abs(time - now) * 1.0;
 				cubes.forEach(obj => {
-					obj.position.z = 0 - timepassed*0.0015;
+					obj.position.z = 0 - timepassed*obj.ratez;
 				});
 				renderer.render(scene, camera);
 			};
