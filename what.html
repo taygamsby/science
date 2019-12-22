@@ -44,7 +44,7 @@
 					}
 					if (bright === true) {
 						let lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
-						while (lum < 0.5) { // if the luminosity is less than 0.5, keep slowly going up until good...
+						while (lum < 0.6) { // if the luminosity is less than 0.5, keep slowly going up until good...
 							material.color.r = Math.min(material.color.r + 0.01, 1.0);
 							material.color.g = Math.min(material.color.g + 0.01, 1.0);
 							material.color.b = Math.min(material.color.b + 0.01, 1.0);
