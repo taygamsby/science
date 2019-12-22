@@ -1,0 +1,284 @@
+<html>
+	<head>
+		<title>three.js test</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/modifiers/SubdivisionModifier.js"></script>
+		<script>
+			const sync = false; // all cubes have the same rotation
+			const clr = true; // all cubes have unique colours
+			const bright = true; // all cubes are bright colours
+			const toon = false; // "toon mode"
+			const weirdcubes = false; // not perfect squares
+			var d = new Date();
+			var time = d.getTime();
+
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x121212);
+			scene.fog = new THREE.Fog(0x121212, 70, 130*4);
+			var camera = new THREE.PerspectiveCamera(30, window.innerWidth/window.innerHeight, 0.1, 15000);
+			
+			var light = new THREE.DirectionalLight(0xff903e);
+            light.shadow.camera = new THREE.PerspectiveCamera(30, 1, 0.1, 150);
+			light.castShadow = false;
+			scene.add(light);
+
+			//var helper = new THREE.CameraHelper( light.shadow.camera );
+			//scene.add( helper );
+			
+			var planeGeometry = new THREE.PlaneGeometry(15000, 15000);
+			planeGeometry.rotateX( - Math.PI / 2 );
+			var planeMaterial = new THREE.ShadowMaterial();
+			planeMaterial.opacity = 0.2;
+			var plane = new THREE.Mesh( planeGeometry, planeMaterial );
+			plane.position.y = 0;
+			plane.receiveShadow = true;
+			//scene.add(plane);
+
+			let projectiles = [];
+			/*
+			let geoproj = new THREE.BoxGeometry(0.1,0.1,0.1);
+            let geomaterial = new THREE.MeshPhongMaterial( { color: 0xffffff } );
+			geomaterial.emissive = geomaterial.color;
+			geomaterial.emissiveIntensity = 0.25;//Math.random();
+			let proj = new THREE.Mesh(geoproj, geomaterial);
+			//proj.position.set(camera.position.x, camera.position.y, camera.position.z);
+			//proj.time = new Date().getTime();
+			//projectiles.push(proj);
+			scene.add(proj);*/
+
+/*var stageGeo = new THREE.BoxGeometry(15000,1,15000, 10,10,10);
+var stageMat = new THREE.MeshPhongMaterial( { color: 0xFFFFFF } );
+stageMat.emissive = new THREE.Color(0xffffff);
+//stageMat.emissive = stageMat.color;
+stageMat.emissiveIntensity = 0.995;//Math.random();
+stageMat.specular = new THREE.Color(0xffffff);
+stageMat.reflectivity = 0;
+var stage = new THREE.Mesh(stageGeo, stageMat);
+stage.position.set(0,-5,0);
+stage.castShadow = false;
+stage.receiveShadow = true;
+scene.add(stage);
+var stage2 = new THREE.Mesh(stageGeo, stageMat);
+stage2.position.set(0,50*2,0);
+stage2.castShadow = false;
+stage2.receiveShadow = true;
+scene.add(stage2);*/
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+			
+			var geometry = new THREE.BoxGeometry(1,1,1);
+			var lod = new THREE.LOD();
+			//var smooth = geometry.clone();
+			//var modifier = new THREE.SubdivisionModifier(5);
+			//modifier.modify(smooth);
+			//geometry = smooth;
+			//geometry.computeVertexNormals();
+
+			var linegeometry = new THREE.EdgesGeometry(geometry); // or WireframeGeometry( geometry )
+			var linematerial = new THREE.LineBasicMaterial( { color: 0x303030 } );
+
+			var cubes = [];
+			//var material = new THREE.MeshBasicMaterial( { color: Math.floor((bright*0x808080) | (Math.random() * 0xFFFFFF)) } );
+			//var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF } );
+			var material = new THREE.MeshPhongMaterial( { color: Math.random() * 0xFFFFFF } );
+			material.toon = 0;
+			//(0.2126*R) + (0.7152*G) + (0.0722*B)
+			for (let y=0; y!=50; y++) {
+				for (let x=0; x!=50; x++) {
+					if (weirdcubes === true) {
+						alert("CODE THE SCALE INSTEAD")
+						//geometry = new THREE.BoxGeometry(Math.random()*1.75+0.75, Math.random()*1.75+0.75, Math.random()*1.75+0.75);
+						//linegeometry = new THREE.EdgesGeometry(geometry);
+					}
+					if (bright === true) {
+						let lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+						while (lum < 0.3) {
+							let top = 1.0;
+							while (top > 0.05) {
+								let selector = Math.floor(Math.random() * 3);
+								let value = Math.random() * top;
+								top -= value;
+								if (selector == 0) {
+									material.color.r = Math.min(material.color.r + (1-material.color.r)*value, 1.0);
+								} else if (selector == 1) {
+									material.color.g = Math.min(material.color.g + (1-material.color.g)*value, 1.0);
+								} else {
+									material.color.b = Math.min(material.color.b + (1-material.color.b)*value, 1.0);
+								}
+							}
+							lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+						}
+
+						while (lum < 0.5) { // if the luminosity is less than 0.5, keep slowly going up until good...
+							material.color.r = Math.min(material.color.r + 0.01, 1.0);
+							material.color.g = Math.min(material.color.g + 0.01, 1.0);
+							material.color.b = Math.min(material.color.b + 0.01, 1.0);
+							lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+						}
+					}
+					if (material.toon == 0) {
+						//material.specular = material.color;// new THREE.Color( 0xff0000 );
+						material.emissive = material.color;
+						material.emissiveIntensity = 0.65;//Math.random();
+						material.shininess = 5;//
+						//material.reflectivity = 0;
+						//material.shininess = 10*Math.random();
+						//material.wireframe = (Math.random() <= 0.02); // 2%
+						//material.reflectivity = 1 * Math.random();
+					}
+					var cube = new THREE.Mesh(geometry, material);
+					cube.castShadow = true;
+					cube.receiveShadow = true;
+					if (weirdcubes === true) {
+						cube.position.x = x*2.5 + Math.random()*0.5;
+						cube.position.y = y*2.5 + Math.random()*0.5;
+					} else {
+						cube.position.x = x*(1.50+Math.random()*0.251234);
+						cube.position.y = y*(1.50+Math.random()*0.251234);
+					}
+					if (sync !== true) {
+						cube.rotation.x = Math.random();
+						cube.rotation.y = Math.random();
+						cube.rotation.z = Math.random();
+					}
+					cube.rotationstartx = cube.rotation.x;
+					cube.rotationstarty = cube.rotation.y;
+
+					if (clr === true) {
+						//if (Math.random() < 0.5) {
+						//	material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF } );
+						//	material.toon = 1;
+						//} else {
+							material = new THREE.MeshPhongMaterial( { color: Math.random() * 0xFFFFFF } );
+							material.toon = 0;
+						//}
+					}
+					var wireframe = new THREE.LineSegments(linegeometry, linematerial);
+					wireframe.position.x = cube.position.x;
+					wireframe.position.y = cube.position.y;
+					if (toon === true) {
+						wireframe.rotation.x = cube.rotation.x - Math.random()/9;
+						wireframe.rotation.y = cube.rotation.y - Math.random()/9;
+						wireframe.rotation.z = cube.rotation.z - Math.random()/9;
+						wireframe.scale.x *= 1.01;
+						wireframe.scale.y *= 1.01;
+						wireframe.scale.z *= 1.01;
+					} else {
+						wireframe.rotation.x = cube.rotation.x;
+						wireframe.rotation.y = cube.rotation.y;
+						wireframe.rotation.z = cube.rotation.z;
+					}
+					wireframe.rotationstartx = cube.rotationstartx;
+					wireframe.rotationstarty = cube.rotationstarty;
+					
+					cube.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
+						//console.log(this.rate);
+						this.rotation.x = this.rotationstartx + this.ratex*timepassed;
+						this.rotation.y = this.rotationstarty + this.ratey*timepassed;
+					};
+					wireframe.onBeforeRender = cube.onBeforeRender;
+
+					cube.ratex = (Math.random() * 0.003123) - 0.0015123;
+					cube.ratey = (Math.random() * 0.003123) - 0.0015123;
+					cube.ratez = (Math.random() * 0.004123) + 0.0015123;
+					cubes.push(cube);
+					scene.add(cube);
+					wireframe.ratex = cube.ratex;
+					wireframe.ratey = cube.ratey;
+					wireframe.ratez = cube.ratez;
+					cubes.push(wireframe);
+					scene.add(wireframe);
+				}
+			}
+
+			camera.position.x = (weirdcubes === true) ? 25*2.5-1.823 : 25*2-1.823;
+			camera.position.y = (weirdcubes === true) ? 25*2.5-1.823 : 25*2-1.823;
+			camera.position.z = (weirdcubes === true) ? 10*2.5 : 10; //zoom
+            
+			scene.add(lod);
+            //grid.position.set(camera.position.x, 0, camera.position.z);
+			//camera.position.y = 5;
+			//light.position.set(camera.position.x, camera.position.y, camera.position.z);
+			var lightTarget = new THREE.Object3D();
+			scene.add(lightTarget);
+			light.target = lightTarget;
+
+            document.addEventListener("click", function() {
+				var linemat = new THREE.LineBasicMaterial({
+					color: 0xffffff
+				});
+                let geoproj = new THREE.BoxGeometry(0.0125,0.0125,0.0125);
+                let geomaterial = new THREE.MeshPhongMaterial( { color: 0xffffff } );
+				geomaterial.emissive = geomaterial.color;
+				geomaterial.emissiveIntensity = 0.25;
+				let proj = new THREE.Mesh(geoproj, geomaterial);
+				for (let i=0; i!=100; i++) {
+					//let mesh = new THREE.Mesh(geoproj, geomaterial);
+					//scene.add(mesh);
+					//proj.add(mesh);
+					var line = new THREE.Line(new THREE.Geometry(), linemat);
+					scene.add(line);
+					proj.add(line);
+				}
+				//proj.scale.set(0.01,0.01,0.01);
+				proj.position.set(camera.position.x, camera.position.y, camera.position.z-1);
+				proj.time = new Date().getTime();
+				proj.pointlight = new THREE.PointLight(0xffffff, 1, 10000, 0.5);
+				scene.add( proj.pointlight );
+
+				proj.onBeforeRender = function(renderer, scene, camera, geometry, material, group) {
+					this.pointlight.position.set(this.position.x, this.position.y, this.position.z);
+					this.position.z -= 0.25;// - Math.abs(obj.timepassed - now)*0.0001;
+					let i = 0;
+					this.children.forEach(child => {
+						var geometry = new THREE.Geometry();
+						let rand = Math.random()*Math.PI*2;
+						let rand2 = Math.random()*Math.PI*2;
+						const scale = 0.125;
+						geometry.vertices.push(
+							new THREE.Vector3(Math.sin(rand)*scale, Math.cos(rand)*scale, 0),
+							new THREE.Vector3(Math.sin(rand2)*scale, Math.cos(rand2)*scale, 0)
+						);
+						child.geometry = geometry;
+
+						//let x = Math.random();
+						//child.position.set(Math.sin(x)*x, Math.sin(x) + x, 0);//Math.random()*0.25-0.125
+						//child.position.x += (Math.random() - 0.5)*this.scale;
+						//child.position.y += 1;//Math.random();
+					});
+
+				}
+				scene.add(proj);
+				projectiles.push(proj);
+            })
+
+			let timepassed = 0.0;
+			var animate = function () {
+				requestAnimationFrame(animate);
+				var now = new Date().getTime();
+				timepassed = Math.abs(time - now) * 1.0;
+				//let ri = Math.floor(Math.random() * Math.min(cubes.length,5));
+				light.position.set(cubes[cubes.length-2].position.x, cubes[cubes.length-2].position.y, cubes[cubes.length-2].position.z);
+				lightTarget.position.set(cubes[1].position.x, cubes[1].position.y, cubes[1].position.z);
+				cubes.forEach(obj => {
+					obj.position.z = 0 - timepassed*obj.ratez;
+				});
+				renderer.render(scene, camera);
+			};
+
+			animate();
+		</script>
+	</body>
+</html>
