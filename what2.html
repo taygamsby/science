@@ -47,6 +47,7 @@
 			//var material = new THREE.MeshBasicMaterial( { color: Math.floor((bright*0x808080) | (Math.random() * 0xFFFFFF)) } );
 			//var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF } );
 			var material = new THREE.MeshPhongMaterial( { color: Math.random() * 0xFFFFFF } );
+			material.toon = 0;
 			//(0.2126*R) + (0.7152*G) + (0.0722*B)
 			for (let y=0; y!=50; y++) {
 				for (let x=0; x!=50; x++) {
@@ -56,18 +57,37 @@
 					}
 					if (bright === true) {
 						let lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+						if (lum < 0.3) {
+							let top = 1.0;
+							while (top > 0.05) {
+								let selector = Math.floor(Math.random() * 3);
+								let value = Math.random() * top;
+								top -= value;
+								if (selector == 0) {
+									material.color.r = Math.min(material.color.r + (1-material.color.r)*value, 1.0);
+								} else if (selector == 1) {
+									material.color.g = Math.min(material.color.g + (1-material.color.g)*value, 1.0);
+								} else {
+									material.color.b = Math.min(material.color.b + (1-material.color.b)*value, 1.0);
+								}
+							}
+							lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+						}
+
 						while (lum < 0.6) { // if the luminosity is less than 0.5, keep slowly going up until good...
 							material.color.r = Math.min(material.color.r + 0.01, 1.0);
 							material.color.g = Math.min(material.color.g + 0.01, 1.0);
 							material.color.b = Math.min(material.color.b + 0.01, 1.0);
 							lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
 						}
-						//material.specular = material.color;// new THREE.Color( 0xff0000 );
-						material.emissive = material.color;
-						material.emissiveIntensity = 0.25;
-						material.shininess = 3;
-						//material.wireframe = true;
-						material.reflectivity = 0.005;
+						if (material.toon == 0) {
+							//material.specular = material.color;// new THREE.Color( 0xff0000 );
+							material.emissive = material.color;
+							material.emissiveIntensity = Math.random();
+							material.shininess = 10*Math.random();
+							material.wireframe = (Math.random() <= 0.02); // 2%
+							material.reflectivity = 1 * Math.random();
+						}
 					}
 					var cube = new THREE.Mesh(geometry, material);
 					if (weirdcubes === true) {
@@ -86,8 +106,13 @@
 					cube.rotationstarty = cube.rotation.y;
 
 					if (clr === true) {
-						//material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF } );
-						material = new THREE.MeshPhongMaterial( { color: Math.random() * 0xFFFFFF } );
+						if (Math.random() < 0.5) {
+							material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF } );
+							material.toon = 1;
+						} else {
+							material = new THREE.MeshPhongMaterial( { color: Math.random() * 0xFFFFFF } );
+							material.toon = 0;
+						}
 					}
 					var wireframe = new THREE.LineSegments(linegeometry, linematerial);
 					wireframe.position.x = cube.position.x;
