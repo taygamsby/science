@@ -54,11 +54,11 @@
 					var cube = new THREE.Mesh(geometry, material);
 					cube.color = 0xFFFFFF;
 					if (weirdcubes === true) {
-						cube.position.x = x*2.5;
-						cube.position.y = y*2.5;
+						cube.position.x = x*2.5 + Math.random()*0.5;
+						cube.position.y = y*2.5 + Math.random()*0.5;
 					} else {
-						cube.position.x = x*1.75;
-						cube.position.y = y*1.75;
+						cube.position.x = x*(1.75+Math.random()*0.25) + Math.random()*0.12345;
+						cube.position.y = y*(1.75+Math.random()*0.25) + Math.random()*0.12345;
 					}
 					if (sync !== true) {
 						cube.rotation.x = Math.random();
@@ -96,9 +96,9 @@
 					};
 					wireframe.onBeforeRender = cube.onBeforeRender;
 
-					cube.ratex = (Math.random() * 0.003) - 0.0015;
-					cube.ratey = (Math.random() * 0.003) - 0.0015;
-					cube.ratez = (Math.random() * 0.004) + 0.0015;
+					cube.ratex = (Math.random() * 0.003123) - 0.0015123;
+					cube.ratey = (Math.random() * 0.003123) - 0.0015123;
+					cube.ratez = (Math.random() * 0.004123) + 0.0015123;
 					cubes.push(cube);
 					scene.add(cube);
 					wireframe.ratex = cube.ratex;
@@ -109,8 +109,8 @@
 				}
 			}
 
-			camera.position.x = (weirdcubes === true) ? 50*2.5-1 : 50*2-1;
-			camera.position.y = (weirdcubes === true) ? 50*2.5-1 : 50*2-1;
+			camera.position.x = (weirdcubes === true) ? 50*2.5-1.823 : 50*2-1.823;
+			camera.position.y = (weirdcubes === true) ? 50*2.5-1.823 : 50*2-1.823;
 			camera.position.z = (weirdcubes === true) ? 10*2.5 : 10; //zoom
 
 			let timepassed = 0.0;
