@@ -1,0 +1,110 @@
+<html>
+	<head>
+		<title>three.js test</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/modifiers/SubdivisionModifier.js"></script>
+		<script>
+			const earth_cube = 79900.919004280802930334188622433;
+			var d = new Date();
+			var time = d.getTime();
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x121212); ;//new THREE.Color(0x121212);
+			scene.fog = new THREE.Fog(0x121212, earth_cube/1000, 200*earth_cube);
+
+			var camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 15000*earth_cube);
+			
+			var light = new THREE.PointLight(0xFFFFFF, 1, earth_cube*2000, 2); //0xAFAF1F
+			scene.add(light);
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+			
+			// cube material
+			var texture = new THREE.TextureLoader().load( 'https://raw.githubusercontent.com/taygamsby/science/master/textures/sub3.jpg' );
+			var texture2 = new THREE.TextureLoader().load( 'https://raw.githubusercontent.com/taygamsby/science/master/textures/sub3i.jpg' ); // invert
+			texture.repeat.set(Math.floor(Math.random()*256),Math.floor(Math.random()*256));
+			texture2.repeat = texture.repeat;
+			texture2.wrapT = texture2.wrapS = texture.wrapT = texture.wrapS = THREE.RepeatWrapping; //RepeatWrapping
+			texture2.anisotropy = texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+			texture2.minFilter = texture.minFilter = THREE.NearestMipmapLinearFilter;
+
+			//var material = new THREE.MeshBasicMaterial( { color: Math.random() * 0xFFFFFF, map: texture } );
+			//var material = new THREE.MeshPhongMaterial( { color: Math.random() * 0xFFFFFF, map: texture } );
+			var material = new THREE.MeshPhongMaterial( { flatShading: true, color: Math.random()*0xffffff, map: texture } );
+			material.emissiveMap = texture2;
+			material.specularMap = texture;
+			//material.displacementMap = texture;
+			//material.displacementScale = 2.0;
+			//material.displacementBias = 10.0;
+			material.emissive = new THREE.Color(Math.random()*0xffffff);//material.color;
+			material.specular = new THREE.Color(Math.random()*0xffffff); // the white areas of specular map
+			material.emissiveIntensity = Math.random();
+			material.shininess = Math.random();
+			material.reflectivity = Math.random();
+			
+			/*let lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+			while (lum < 0.6) {
+				let top = 1.0;
+				while (top > 0.05) {
+					let selector = Math.floor(Math.random() * 3);
+					let value = Math.random() * top;
+					top -= value;
+					if (selector == 0) {
+						material.color.r = Math.min(material.color.r + (1-material.color.r)*value, 1.0);
+					} else if (selector == 1) {
+						material.color.g = Math.min(material.color.g + (1-material.color.g)*value, 1.0);
+					} else {
+						material.color.b = Math.min(material.color.b + (1-material.color.b)*value, 1.0);
+					}
+				}
+				lum = material.color.r*0.2126 + material.color.g*0.7152 + material.color.b*0.0722;
+			}*/
+
+			// an earth-sized cube
+			var x = Math.floor(Math.random() * 4);
+			if (x >= 2)
+				x = 4;
+			var geometry = new THREE.IcosahedronBufferGeometry(earth_cube, x);//new THREE.BoxBufferGeometry(earth_cube,earth_cube,earth_cube);
+			var cube = new THREE.Mesh(geometry, material);
+			cube.castShadow = true;
+			cube.receiveShadow = true;
+
+			cube.onBeforeRender = function() {
+				cube.rotation.y = timepassed * 0.0001;
+				cube.position.z = -timepassed * 200;
+			}
+			cube.rotation.set(Math.random(), 0, Math.random());
+			scene.add(cube);
+
+			camera.position.set(0, 0, 1 * earth_cube); // 0,0,-zoom
+			light.position.copy(camera.position);
+            
+            document.addEventListener("click", function() {
+				
+            });
+
+			let timepassed = 0.0;
+			var animate = function () {
+				//setTimeout(function() {
+					requestAnimationFrame(animate);
+				//}, 1000/24); // 24 fps
+				var now = new Date().getTime();
+				timepassed = Math.abs(time - now) * 1.0;
+				renderer.render(scene, camera);
+			};
+
+			animate();
+		</script>
+	</body>
+</html>
