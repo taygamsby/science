@@ -1,0 +1,89 @@
+<html>
+	<head>
+		<title>three.js test</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script src="js/modifiers/SubdivisionModifier.js"></script>
+		<script>
+			const earth_cube = 79900.919004280802930334188622433;
+			var d = new Date();
+			var time = d.getTime();
+
+			var scene = new THREE.Scene();
+			scene.background = new THREE.Color(0x121212); ;//new THREE.Color(0x121212);
+			scene.fog = new THREE.Fog(0x121212, earth_cube/1000, 15000*earth_cube);
+
+			var camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 15000*earth_cube);
+			
+			var light = new THREE.PointLight(0xFDE0E0, 1, earth_cube*2000, 2); //0xAFAF1F
+			scene.add(light);
+
+			var renderer = new THREE.WebGLRenderer( { antialias: true } );
+			renderer.shadowMap.enabled = true;
+			renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+			renderer.setPixelRatio(window.devicePixelRatio);
+			renderer.setSize(window.innerWidth, window.innerHeight);
+			document.body.appendChild(renderer.domElement);
+			
+			// cube material
+			var texture = new THREE.TextureLoader().load( 'https://raw.githubusercontent.com/taygamsby/science/master/textures/sub3.jpg' );
+			var texture2 = new THREE.TextureLoader().load( 'https://raw.githubusercontent.com/taygamsby/science/master/textures/sub3i.jpg' ); // invert
+			texture.repeat.set(Math.floor(Math.random()*32),Math.floor(Math.random()*32));
+			texture2.repeat = texture.repeat;
+			texture2.wrapT = texture2.wrapS = texture.wrapT = texture.wrapS = THREE.RepeatWrapping; //RepeatWrapping
+			texture2.anisotropy = texture.anisotropy = renderer.capabilities.getMaxAnisotropy();
+			texture2.minFilter = texture.minFilter = THREE.NearestMipmapLinearFilter;
+
+			
+			// an earth-sized cube
+			for (let i=0; i!=8000; i++) {
+				var material = new THREE.MeshPhongMaterial( { flatShading: true, map: undefined } ); //map: texture
+				material.emissiveMap = texture2;
+				material.specularMap = texture2;
+				material.emissive = new THREE.Color(Math.random()*0xffffff);//material.color;
+				material.specular = new THREE.Color(Math.random()*0xffffff); // the white areas of specular map
+				material.emissiveIntensity = Math.random();
+				material.shininess = Math.random();
+				material.reflectivity = Math.random();
+				var x = Math.floor(Math.random() * 4);
+				if (x >= 2)
+					x = 4;
+				var geometry = new THREE.IcosahedronBufferGeometry(earth_cube, x);//new THREE.BoxBufferGeometry(earth_cube,earth_cube,earth_cube);
+				var cube = new THREE.Mesh(geometry, material);
+				cube.castShadow = true;
+				cube.receiveShadow = true;
+				cube.start = new THREE.Vector3((Math.random()-0.5)*earth_cube,(Math.random()-0.5)*earth_cube,Math.random()*-earth_cube*10);
+				cube.velocity = new THREE.Vector3((Math.random()-0.5)*500,(Math.random()-0.5)*500+1, Math.min(Math.random()*-600, -300));
+				cube.rvelocity = new THREE.Vector3(Math.random()*0.01, Math.random()*0.02 - 0.01, Math.random()*0.01);
+				cube.scale.set(Math.random()*0.25 + 0.75, Math.random()*0.50 + 0.50, Math.random()*0.75 + 0.25);
+				cube.rotation.set(Math.random(), Math.random(), Math.random());
+
+				cube.onBeforeRender = function() {
+					this.rotation.set(this.rotation.x, timepassed*this.rvelocity.y, this.rotation.z);
+					this.position.set(timepassed*this.velocity.x+this.start.x, timepassed*this.velocity.y+this.start.y, timepassed*this.velocity.z+this.start.z);
+				}
+				scene.add(cube);
+			}
+
+			camera.position.set(0, 0, 1 * earth_cube); // 0,0,-zoom
+			light.position.copy(camera.position);
+            
+			let timepassed = 0.0;
+			var animate = function () {
+				setTimeout(function() {
+					requestAnimationFrame(animate);
+				}, 1000/24); // 24 fps
+				var now = new Date().getTime();
+				timepassed = Math.abs(time - now) * 1.0;
+				renderer.render(scene, camera);
+			};
+
+			animate();
+		</script>
+	</body>
+</html>
